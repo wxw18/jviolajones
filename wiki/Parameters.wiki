@@ -1,0 +1,21 @@
+#summary Description of the parameters of the detectFaces function.
+
+= Introduction =
+
+Once you have created a detector by loading an OpenCV XML file that way
+{{{
+Detector detector = new Detector("PathtoXMLfile.xml");
+}}}
+
+you may detect objects (such as faces) on an image by calling the detectFaces function, which returns a List`<Rectangle>` containing the rectangles identified as faces on the image.
+
+
+= Signature =
+
+The complete signature of the detectFaces function is the following :
+{{{
+public List<java.awt.Rectangle> getFaces(String file,float baseScale, float scale_inc,float increment, int min_neighbors,boolean doCannyPruning)
+}}}
+where the parameters mean the following :
+  * _file_ : the image to work on
+  * _baseScale_
