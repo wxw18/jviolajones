@@ -13,16 +13,26 @@ public class Feature {
 	float left_val;
 	float right_val;
 	Point size;
-	public Feature(	float threshold,float left_val,	float right_val,Point size) {
+	int left_node;
+	int right_node;
+	boolean has_left_val;
+	boolean has_right_val;
+	
+	public Feature(	float threshold,float left_val,	int left_node,boolean has_left_val,
+			float right_val,int right_node,boolean has_right_val,Point size) {
 		nb_rects = 0;
 		rects=new Rect[3];
 		this.threshold=threshold;
 		this.left_val=left_val;
+		this.left_node = left_node;
+		this.has_left_val = has_left_val;
 		this.right_val=right_val;
+		this.right_node=right_node;
+		this.has_right_val=has_right_val;
 		this.size = size;
 	}
 
-	public float getVal(int[][] grayImage, int[][] squares, int i, int j, float scale) {
+	public int getLeftOrRight(int[][] grayImage, int[][] squares, int i, int j, float scale) {
 		int w=(int) (scale*size.x);
 		int h=(int)(scale*size.y);
 		double inv_area=1./(w*h);
@@ -47,7 +57,9 @@ public class Feature {
 				//System.out.println(rect_sum);
 				double rect_sum2=rect_sum*inv_area;
 
-		return (rect_sum2<threshold*vnorm?left_val:right_val);
+				//System.out.println(rect_sum2+" "+threshold*vnorm);	
+				return (rect_sum2<threshold*vnorm)?Tree.LEFT:Tree.RIGHT;
+
 	}
 
 	public void add(Rect r) {

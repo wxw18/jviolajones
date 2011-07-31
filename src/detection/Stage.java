@@ -5,16 +5,28 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Stage {
-List<Feature> features;
+	List<Tree> trees;
 float threshold;
 	public Stage(float threshold) {
 this.threshold=threshold;
-features = new LinkedList<Feature>();
+trees=new LinkedList<Tree>();
+//features = new LinkedList<Feature>();
 	}
+	
+	public void addTree(Tree t)
+	{
+		trees.add(t);
+	}
+	
 	public boolean pass(int[][] grayImage, int[][] squares, int i, int j, float scale) {
 		float sum=0;
-		for(Feature f : features)
-			sum+=f.getVal(grayImage, squares,i, j, scale);
+		for(Tree t : trees)
+		{
+
+			//System.out.println("Returned value :"+t.getVal(grayImage, squares,i, j, scale));
+
+			sum+=t.getVal(grayImage, squares,i, j, scale);
+		}
 		//System.out.println(sum+" "+threshold);
 		return sum>threshold;
 	}

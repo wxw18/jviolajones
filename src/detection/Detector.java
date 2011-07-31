@@ -46,7 +46,7 @@ Point size;
 	      racine = (Element) document.getRootElement().getChildren().get(0);
 		  Scanner scanner = new Scanner(racine.getChild("size").getText());
 		  size = new Point(scanner.nextInt(),scanner.nextInt());
-	      Iterator it=((Element) racine.getChildren("stages").get(0)).getChildren("_").iterator();
+	      Iterator it=racine.getChild("stages").getChildren("_").iterator();
 	      while(it.hasNext())
 	      {
 	    	  Element stage=(Element)it.next();
@@ -56,24 +56,60 @@ Point size;
 	    	  Stage st=new Stage(thres);
 	    	 while(it2.hasNext())
 	    	 {
-	    		 Element feature=((Element)it2.next()).getChild("_");
+	    		 Element tree = ((Element)it2.next());
+	    		 Tree t = new Tree();
+	    		 Iterator it4 = tree.getChildren("_").iterator();
+	    		 while(it4.hasNext())
+	    		 {
+	    		 Element feature=(Element) it4.next();
 	    		 float thres2=Float.parseFloat(feature.getChild("threshold").getText());
-	    		 float left_val=Float.parseFloat(feature.getChild("left_val").getText());
-	    		 float right_val=Float.parseFloat(feature.getChild("right_val").getText());
-	    		 Feature f = new Feature(thres2,left_val,right_val,size);
+	    		 int left_node=-1;
+	    		 float left_val = 0;
+	    		 boolean has_left_val =false;
+	    		 int right_node=-1;
+	    		 float right_val = 0;
+	    		 boolean has_right_val =false;
+	    		 Element e;
+	    		 if((e=feature.getChild("left_val"))!=null)
+	    		 {
+	    			 left_val = Float.parseFloat(e.getText());
+	    			 has_left_val=true;
+	    		 }
+	    		 else
+	    		 {
+	    			 left_node = Integer.parseInt(feature.getChild("left_node").getText());
+	    			 has_left_val=false;
+	    		 }
+	    		 
+	    		 if((e=feature.getChild("right_val"))!=null)
+	    		 {
+	    			 right_val = Float.parseFloat(e.getText());
+	    			 has_right_val=true;
+	    		 }
+	    		 else
+	    		 {
+	    			 right_node = Integer.parseInt(feature.getChild("right_node").getText());
+	    			 has_right_val=false;
+	    		 }
+	    		 Feature f = new Feature(thres2,left_val,left_node,has_left_val,right_val,right_node,has_right_val,size);
 	    		 Iterator it3=feature.getChild("feature").getChild("rects").getChildren("_").iterator();
 	    		 while(it3.hasNext())
 	    		 {
 	    			 String s = ((Element) it3.next()).getText().trim();
-	    			 //System.out.println(s);
+	    			//System.out.println(s);
 	    			 Rect r = Rect.fromString(s);
 	    			 f.add(r);
 	    		 }
-	    		 st.features.add(f);
+
+	    		 t.addFeature(f);
 	    		 }
+	    		 st.addTree(t);
+	    		 //System.out.println("Number of nodes in tree "+t.features.size());
+	    		 }
+	    	 //System.out.println("Number of trees : "+ st.trees.size());
 	    	 stages.add(st);
 	    	 }
-	     // System.out.println(stages.size());
+	      //System.out.println(stages.size());
 	      }
 
 	/** Returns the list of detected objects in an image applying the Viola-Jones algorithm.
@@ -140,7 +176,7 @@ Point size;
 							
 							if(!s.pass(grayImage,squares,i,j,scale))
 								{pass=false;
-								//System.out.println(k);
+								System.out.println("Failed at Stage "+k);
 								break;}
 							k++;
 						}
