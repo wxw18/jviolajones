@@ -64,7 +64,9 @@ Point size;
 	    		 Iterator it3=feature.getChild("feature").getChild("rects").getChildren("_").iterator();
 	    		 while(it3.hasNext())
 	    		 {
-	    			 Rect r = Rect.fromString(((Element) it3.next()).getText());
+	    			 String s = ((Element) it3.next()).getText().trim();
+	    			 //System.out.println(s);
+	    			 Rect r = Rect.fromString(s);
 	    			 f.add(r);
 	    		 }
 	    		 st.features.add(f);
