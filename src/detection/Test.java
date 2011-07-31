@@ -1,5 +1,4 @@
 package detection;
-import recognition.*;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -47,10 +46,7 @@ public class Test extends JFrame{
 	}
 public static void main(String[] args) throws IOException
 {
-	//new Test(new File(args[0]),args[1]).setVisible(true);
-	Recognition r = new Recognition(10);	
-	r.addExample(ImageIO.read(new File("newtest/sarah_live_2.gif")),"Sarah");
-	r.recognize(null);
+	new Test(new File(args[0]),args[1]).setVisible(true);
 }
 
 }
