@@ -32,7 +32,7 @@ public class Test extends JFrame{
 		}
 		Dessin d = new Dessin(image);
 		Detector detector=new Detector(XMLFile);
-		List<Rectangle> res=detector.getFaces(img.getAbsolutePath(), 2, 1.25f, 0.1f,3,true);
+		List<Rectangle> res=detector.getFaces(img.getAbsolutePath(), 1, 1.25f, 0.1f,1,true);
 		System.out.println(res.size()+" faces found!");
         d.setRects(res);
 		setContentPane(d);
