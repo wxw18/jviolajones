@@ -176,7 +176,7 @@ Point size;
 							
 							if(!s.pass(grayImage,squares,i,j,scale))
 								{pass=false;
-								System.out.println("Failed at Stage "+k);
+								//System.out.println("Failed at Stage "+k);
 								break;}
 							k++;
 						}
