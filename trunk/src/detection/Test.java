@@ -31,7 +31,7 @@ public class Test extends JFrame{
 			e.printStackTrace();
 		}
 		Dessin d = new Dessin(image);
-		Detector detector=new Detector(XMLFile);
+		Detector detector=Detector.create(XMLFile);
 		List<Rectangle> res=detector.getFaces(img.getAbsolutePath(), 1, 1.25f, 0.1f,1,true);
 		System.out.println(res.size()+" faces found!");
         d.setRects(res);
