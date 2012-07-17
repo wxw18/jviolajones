@@ -31,6 +31,7 @@ Point size;
 	 * @return The corresponding detector.
 	 */
 	public static Detector create(String filename) {
+		/* Read XML file */ 
 		org.jdom.Document document=null;
 		SAXBuilder sxb = new SAXBuilder();
 	      try
@@ -47,16 +48,24 @@ Point size;
 	 */
 	public Detector(org.jdom.Document document)
 	{
+		/* The detector is constituted by stages, each of them telling whether the considered zone represents the object
+		 * with probability a bit greater than 0.5. If a zone passes all stages, it is considered as representing the object.*/
 		stages=new LinkedList<Stage>();
+		
+		/* Read the size (in pixels) of the detector. */
 		 Element racine = (Element) document.getRootElement().getChildren().get(0);
 		  Scanner scanner = new Scanner(racine.getChild("size").getText());
 		  size = new Point(scanner.nextInt(),scanner.nextInt());
+		  
+		  /* Iterate over the stages nodes to read the stages. */
 	      Iterator it=racine.getChild("stages").getChildren("_").iterator();
 	      while(it.hasNext())
 	      {
 	    	  Element stage=(Element)it.next();
+	    	  /* Read the stage threshold. */
 	    	  float thres=Float.parseFloat(stage.getChild("stage_threshold").getText());
-	    	  //System.out.println(thres);
+	    	  
+	    	  /*Read all trees of the stage. */
 	    	  Iterator it2=stage.getChild("trees").getChildren("_").iterator();
 	    	  Stage st=new Stage(thres);
 	    	 while(it2.hasNext())
@@ -101,7 +110,6 @@ Point size;
 	    		 while(it3.hasNext())
 	    		 {
 	    			 String s = ((Element) it3.next()).getText().trim();
-	    			//System.out.println(s);
 	    			 Rect r = Rect.fromString(s);
 	    			 f.add(r);
 	    		 }
@@ -109,12 +117,9 @@ Point size;
 	    		 t.addFeature(f);
 	    		 }
 	    		 st.addTree(t);
-	    		 //System.out.println("Number of nodes in tree "+t.features.size());
 	    		 }
-	    	 //System.out.println("Number of trees : "+ st.trees.size());
 	    	 stages.add(st);
 	    	 }
-	      //System.out.println(stages.size());
 	      }
 
 	/** Returns the list of detected objects in an image applying the Viola-Jones algorithm.
@@ -133,7 +138,6 @@ Point size;
 			BufferedImage image = ImageIO.read(new File(file));
 			return getFaces(image, baseScale, scale_inc, increment, min_neighbors, doCannyPruning);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -144,7 +148,10 @@ Point size;
 			List<Rectangle> ret=new ArrayList<Rectangle>();
 			int width=image.getWidth();
 			int height=image.getHeight();
+			/* Compute the max scale of the detector, i.e. the size of the image divided by the size of the detector. */
 			float maxScale = (Math.min((width+0.f)/size.x,(height+0.0f)/size.y));
+			
+			/* Compute the grayscale image, the integral image and the squared integral image.*/
 			int[][] grayImage=new int[width][height];
 			int[][] img = new int[width][height];
 			int[][] squares=new int[width][height];
@@ -166,17 +173,26 @@ Point size;
 					col2+=value*value;
 				}
 			}
+			
+			/* Eventually compute the gradient of the image, if option is on. */
 			int[][] canny = null;
 			if(doCannyPruning)
 				canny = getIntegralCanny(img);
+			
+			/*Heart of the algorithm : detection */
+			/*For each scale of the detection window */
 			for(float scale=baseScale;scale<maxScale;scale*=scale_inc)
 			{
+				/*Compute the sliding step of the window*/
 				int step=(int) (scale*size.x*increment);
 				int size=(int) (scale*this.size.x);
+				/*For each position of the window on the image, check whether the object is detected there.*/
 				for(int i=0;i<width-size;i+=step)
 				{
 					for(int j=0;j<height-size;j+=step)
 					{
+						/* If Canny pruning is on, compute the edge density of the zone.
+						 * If it is too low, the object should not be there so skip the region.*/
 						if(doCannyPruning)
 						{
 						int edges_density = canny[i+size][j+size]+canny[i][j]-canny[i][j+size]-canny[i+size][j];
@@ -185,16 +201,15 @@ Point size;
 							continue;
 						}
 						boolean pass=true;
-						int k=0;
+						/* Perform each stage of the detector on the window. If one stage fails, the zone is rejected.*/
 						for(Stage s:stages)
 						{
 							
 							if(!s.pass(grayImage,squares,i,j,scale))
 								{pass=false;
-								//System.out.println("Failed at Stage "+k);
 								break;}
-							k++;
 						}
+						/* If the window passed all stages, add it to the results. */
 						if(pass) ret.add(new Rectangle(i,j,size,size));
 					}
 				}
@@ -202,8 +217,12 @@ Point size;
 			return merge(ret,min_neighbors);
 	}
 	
+	/** Compute the Canny Edge detector of the image (cf Wikipedia for the algorithm). 
+	 * @param grayImage The grayscale original image.
+	 * @return The image of edges detected (as an integral image to speed up further computations).*/
 	public int[][] getIntegralCanny(int[][] grayImage)
 	{
+		/* Convolution of the image by a gaussian filter to reduce noise.*/
 		int[][] canny = new int[grayImage.length][grayImage[0].length];
 		for(int i=2;i<canny.length-2;i++)
 			for(int j=2;j<canny[0].length-2;j++)
@@ -236,8 +255,9 @@ Point size;
 				                      sum+=2*grayImage[i+2][j+2];
 
 				      				canny[i][j]=sum/159;
-				      				//System.out.println(canny[i][j]);
 			}
+		
+		/*Computation of the discrete gradient of the image.*/
 		int[][] grad = new int[grayImage.length][grayImage[0].length];
 		for(int i=1;i<canny.length-1;i++)
 			for(int j=1;j<canny[0].length-1;j++)
@@ -245,11 +265,9 @@ Point size;
 				int grad_x =-canny[i-1][j-1]+canny[i+1][j-1]-2*canny[i-1][j]+2*canny[i+1][j]-canny[i-1][j+1]+canny[i+1][j+1];
 				int grad_y = canny[i-1][j-1]+2*canny[i][j-1]+canny[i+1][j-1]-canny[i-1][j+1]-2*canny[i][j+1]-canny[i+1][j+1];
 				grad[i][j]=Math.abs(grad_x)+Math.abs(grad_y);
-				//System.out.println(grad[i][j]);
 			}
-				//JFrame f = new JFrame();
-				//f.setContentPane(new DessinChiffre(grad));
-				//f.setVisible(true);
+		
+		/* Suppression of non-maxima of the gradient and computation of the integral Canny image. */
 				for(int i=0;i<canny.length;i++)
 				{
 					int col=0;
@@ -263,6 +281,14 @@ Point size;
 		return canny;
 	}
 	
+	/** Merge the raw detections resulting from the detection step to avoid multiple detections of the same object.
+	 * A threshold on the minimum numbers of rectangles that need to be merged for the resulting detection to be kept can be given,
+	 * to lower the rate of false detections.
+	 * Two rectangles need to be merged if they overlap enough.
+	 * @param rects The raw detections returned by the detection algorithm.
+	 * @param min_neighbors The minimum number of rectangles needed for the corresponding detection to be kept.
+	 * @return The merged rectangular detections.
+	 */
 	public List<java.awt.Rectangle> merge(List<java.awt.Rectangle> rects, int min_neighbors)
 	{
 		 List<java.awt.Rectangle> retour=new  LinkedList<java.awt.Rectangle>();
@@ -285,7 +311,6 @@ Point size;
 				nb_classes++;
 			}
 		}
-		//System.out.println(Arrays.toString(ret));
 		int[] neighbors=new int[nb_classes];
 		Rectangle[] rect=new Rectangle[nb_classes];
 		for(int i=0;i<nb_classes;i++)
@@ -317,16 +342,11 @@ Point size;
 		return retour;
 	}
 	
+	/** Returns true if two rectangles overlap and should be merged.*/
 	public boolean equals(Rectangle r1, Rectangle r2)
 	{
 		int distance = (int)(r1.width*0.2);
 
-	    /*return r2.x <= r1.x + distance &&
-	           r2.x >= r1.x - distance &&
-	           r2.y <= r1.y + distance &&
-	           r2.y >= r1.y - distance &&
-	           r2.width <= (int)( r1.width * 1.2 ) &&
-	           (int)( r2.width * 1.2 ) >= r1.width;*/
 		if(r2.x <= r1.x + distance &&
 	           r2.x >= r1.x - distance &&
 	           r2.y <= r1.y + distance &&
