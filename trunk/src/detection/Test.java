@@ -23,15 +23,17 @@ public class Test extends JFrame{
 	
 	public Test(File img, String XMLFile)
 	{
+		/* Load image */
 		Image image=null;
 		try {
 			image = ImageIO.read(img);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		Dessin d = new Dessin(image);
+		/* Build the detector from XML file */
 		Detector detector=Detector.create(XMLFile);
+		/* Launch the detector with default parameters */
 		List<Rectangle> res=detector.getFaces(img.getAbsolutePath(), 1, 1.25f, 0.1f,1,true);
 		System.out.println(res.size()+" faces found!");
         d.setRects(res);
