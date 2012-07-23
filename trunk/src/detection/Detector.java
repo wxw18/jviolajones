@@ -145,6 +145,8 @@ Point size;
 	
 	public List<java.awt.Rectangle> getFaces(BufferedImage image,float baseScale, float scale_inc,float increment, int min_neighbors,boolean doCannyPruning)
 	{
+			//StopWatch sw = new StopWatch();
+			//sw.start();
 			List<Rectangle> ret=new ArrayList<Rectangle>();
 			int width=image.getWidth();
 			int height=image.getHeight();
@@ -214,6 +216,7 @@ Point size;
 					}
 				}
 			}
+			//sw.print("Single threaded : ");
 			return merge(ret,min_neighbors);
 	}
 	
