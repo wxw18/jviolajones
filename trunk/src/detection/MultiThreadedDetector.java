@@ -43,7 +43,7 @@ public class MultiThreadedDetector extends Detector{
 		super(document);
 	      }
 	
-	public List<java.awt.Rectangle> getFaces(BufferedImage image,float baseScale, float scale_inc,float increment, int min_neighbors,boolean doCannyPruning)
+	public List<java.awt.Rectangle> getFaces(BufferedImage image,float baseScale, float scale_inc,float increment, int min_neighbors,final boolean doCannyPruning)
 	{
 		//StopWatch sw = new StopWatch();
 		//sw.start();
@@ -79,10 +79,10 @@ public class MultiThreadedDetector extends Detector{
 			/* Eventually compute the gradient of the image, if option is on. */
 			int[][] canny = null;
 			if(doCannyPruning)
-				canny = getIntegralCanny(img);
-			
+				canny = CannyPruner.getIntegralCanny(img);
+			final int[][] canny_final = canny;
 			/*Heart of the algorithm : detection */
-			ExecutorService threadPool = Executors.newFixedThreadPool(16);
+			ExecutorService threadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 			/*For each scale of the detection window */
 			for(float scale=baseScale;scale<maxScale;scale*=scale_inc)
 			{
@@ -92,24 +92,26 @@ public class MultiThreadedDetector extends Detector{
 				/*For each position of the window on the image, check whether the object is detected there.*/
 				for(int i=0;i<width-size;i+=step)
 				{
-					for(int j=0;j<height-size;j+=step)
+					final int i_final = i;
+                    final float scale_final = scale;
+                    final int size_final = size;
+                    final int step_final = step;
+                    Runnable r = new Runnable(){
+                        public void run() {
+					for(int j=0;j<height-size_final;j+=step_final)
 					{
 						
 						/* If Canny pruning is on, compute the edge density of the zone.
 						 * If it is too low, the object should not be there so skip the region.*/
 						if(doCannyPruning)
 						{
-						int edges_density = canny[i+size][j+size]+canny[i][j]-canny[i][j+size]-canny[i+size][j];
-						int d = edges_density/size/size;
+						int edges_density = canny_final[i_final+size_final][j+size_final]+canny_final[i_final][j]-canny_final[i_final][j+size_final]-canny_final[i_final+size_final][j];
+						int d = edges_density/size_final/size_final;
 						if(d<20||d>100)
 							continue;
 						}
-						final int i_final = i;
                         final int j_final = j;
-                        final float scale_final = scale;
-                        final int size_final = size;
-						Runnable r = new Runnable(){
-	                           public void run() {
+						
 	                              boolean pass = true;
 	                              /* Perform each stage of the detector on the window. If one stage fails, the zone is rejected.*/
 	                              for (Stage s : stages) {
@@ -121,15 +123,14 @@ public class MultiThreadedDetector extends Detector{
 	                              }
 	      						/* If the window passed all stages, add it to the results. */
 	                              if (pass) {
-	                                 System.out.println("found!");
 	                                 synchronized (ret) {
 	                                    ret.add(new Rectangle(i_final, j_final, size_final, size_final));
 	                                 }
 	                              }
 	                           }
+    					}
 	                        };
 	                        threadPool.execute(r);
-					}
 				}
 			}
 			threadPool.shutdown();

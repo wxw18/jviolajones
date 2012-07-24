@@ -31,9 +31,9 @@ public class Test extends JFrame{
 		}
 		Dessin d = new Dessin(image);
 		/* Build the detector from XML file */
-		Detector detector=Detector.create(XMLFile);
+		//Detector detector=Detector.create(XMLFile);
 		/*Uncomment following to use the multi-threaded detector */
-		//detector = MultiThreadedDetector.create(XMLFile);
+		Detector detector = MultiThreadedDetector.create(XMLFile);
 		/* Launch the detector with default parameters */
 		List<Rectangle> res=detector.getFaces(img.getAbsolutePath(), 1, 1.25f, 0.1f,1,true);
 		System.out.println(res.size()+" faces found!");
